@@ -86,6 +86,7 @@ void test_function2()
     }
 }
 
+/* Code principal */
 int main() 
 {
     coroutine1 = init_coroutine(stack1, STACK_SIZE_FULL, &test_function1);
