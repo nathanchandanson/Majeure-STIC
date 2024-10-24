@@ -71,7 +71,7 @@ thread thread2;
 thread thread3;
 
 /* Coroutine d'ordonnancement */
-thread* current_thread;
+coroutine_t* current_thread;
 coroutine_t coroutine_ordonnancement;
 
 void scheduling_fct()
@@ -79,25 +79,27 @@ void scheduling_fct()
     while(1)
     {
         if(thread1.statut == Pret){
-            current_thread = &thread1;
+            // printf("thread1 Pret\n");
+            current_thread = &(thread1.contexte_coroutine);
             switch_coroutine(&coroutine_ordonnancement, thread1.contexte_coroutine);
         }
         if(thread2.statut == Pret){
-            current_thread = &thread2;
+            // printf("thread2 Pret\n");
+            current_thread = &(thread2.contexte_coroutine);
             switch_coroutine(&coroutine_ordonnancement, thread2.contexte_coroutine);
         }
         if(thread3.statut == Pret){
-            current_thread = &thread3;
+            // printf("thread3 Pret\n");
+            current_thread = &(thread3.contexte_coroutine);
             switch_coroutine(&coroutine_ordonnancement, thread3.contexte_coroutine);
         }
-        printf("\n\n");
     }
 }
 
 /* Threads Functions */
 void yield()
 {
-    switch_coroutine(&current_thread->contexte_coroutine, coroutine_ordonnancement);
+    switch_coroutine(current_thread, coroutine_ordonnancement);
 }
 
 thread thread_create(void *stack_begin, size_t stack_size,
@@ -118,7 +120,6 @@ void test_function1()
         printf("Compteur thread1 : %d\n", compteur);
         compteur++;
         read_val = getchar();
-        printf("%d\n", read_val);
         if(read_val != -1){
             compteur = 0;
         }
@@ -153,32 +154,65 @@ int buffer_state;
 
 void producteur()
 {
-    if(buffer_state == 1){      // Si le buffer est plein : on bloque le producteur pour ne plus l'éxecuter
-        thread1.statut = Bloque;
+    while(1)
+    {
+        if(buffer_state == 1){      // Si le buffer est plein : on bloque le producteur pour ne plus l'éxecuter
+            thread1.statut = Bloque;
+            yield();
+        }
+        int read_val = getchar();
+        if(read_val != -1 && read_val != '\n'){
+            printf("Value read\n");
+            buffer_value = read_val;
+            buffer_state = 1;
+            thread2.statut = Pret;
+            thread3.statut = Pret;
+        }
         yield();
     }
-    int read_val = getchar();
-    if(read_val != -1){
-        buffer_value = read_val;
-        buffer_state = 1;
-    }
-    yield();
 }
 
 void consommateurA()
 {
-    if(buffer_state == 0){      // Si rien dans le buffer : on bloque le thread pour ne plus l'executer
-        thread2.statut = Bloque;
-    }else{  // On a une donnée à lire
-
+    int num = 0;
+    while(1)
+    {
+        if(buffer_state == 0){      // Si rien dans le buffer : on bloque le thread pour ne plus l'executer
+            thread2.statut = Bloque;
+            yield();
+        }else{  // On a une donnée à lire
+            if(num <= 0){
+                num = buffer_value;
+                buffer_state = 0;
+                thread1.statut = Pret;
+            }
+            while(num > 0){
+                printf("A");
+                num--;
+                yield();
+            }
+        }
     }
-    // Si on écrit sur l'écran : on vide le buffer et on débloque le producteur
 }
 
 void consommateurB()
 {
-    if(buffer_state == 0){
-        thread3.statut = Bloque;
+    int num = 0;
+    while(1)
+    {
+        if(buffer_state == 0){      // Si rien dans le buffer : on bloque le thread pour ne plus l'executer
+            thread3.statut = Bloque;
+            yield();
+        }else{  // On a une donnée à lire
+            num = buffer_value;
+            buffer_state = 0;
+            thread1.statut = Pret;
+            while(num > 0){
+                printf("B");
+                num--;
+                yield();
+            }
+        }
     }
 }
 
@@ -188,9 +222,15 @@ int main()
     fcntl(0, F_SETFL, fcntl(0, F_GETFL) | O_NONBLOCK);
 
     coroutine_ordonnancement = init_coroutine(stack1, STACK_SIZE_FULL, &scheduling_fct);
-    thread1 = thread_create(stack2, STACK_SIZE_FULL, &test_function1);
-    thread2 = thread_create(stack3, STACK_SIZE_FULL, &test_function2);
-    thread3 = thread_create(stack4, STACK_SIZE_FULL, &test_function3);
+    // thread1 = thread_create(stack2, STACK_SIZE_FULL, &test_function1);
+    // thread2 = thread_create(stack3, STACK_SIZE_FULL, &test_function2);
+    // thread3 = thread_create(stack4, STACK_SIZE_FULL, &test_function3);
+    thread1 = thread_create(stack2, STACK_SIZE_FULL, &producteur);
+    thread2 = thread_create(stack3, STACK_SIZE_FULL, &consommateurA);
+    thread3 = thread_create(stack4, STACK_SIZE_FULL, &consommateurB);
+
+    buffer_state = 0;
+    buffer_value = 0;
 
     enter_coroutine(coroutine_ordonnancement);
     return 0; 
