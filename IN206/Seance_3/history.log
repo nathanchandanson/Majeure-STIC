@@ -1,0 +1,37 @@
+e9c6d170-e239-49eb-aaae-89d20ae60b6c:1733393597688:0:F:create table CLI (\n    CodeCli number(5) constraint Cle_Cli primary key,\n    NomCli char(20) constraint NomCli_Not_Null not null,\n    Pays char(15) constraint Pays_Not_Nell not null\n);
+cef13988-e0bf-4eb6-af25-dfae29190aba:1733393598996:0:F:create table COM ( \n    NumCom number(5) constraint Cle_Com primary key,  \n    NumCli [number(5)] constraint Com_Ref_Cli references CLI,  \n    FraisPort number(3,2) constraint FraisPort_Not_Null not null \n    AnCom number(4)\n);
+120ad4c5-3188-482d-af62-2ebb30798b9d:1733393600076:0:F:create table PROD (\n    NumProd number(5) constraint Cle_Prod primary key,\n    NomProd char(20) constraint NomProd_Not_Null not null,\n    TypeProd char(20) constraint TypeProd_Not_Null not null\n);
+fcdc0580-e119-44b5-a069-e62c9c96ea75:1733393601340:0:F:create table DET (\n    NumCom number(5) constraint Det_Ref_Com references COM,\n    NumProd number(5) constraint Det_Ref_Prod references PROD,\n    Qte number(5) constraint Qte_Not_Null not null,\n    Remise number(5) constraint Qte_Not_Null not null\n);
+e47b0ec6-99fb-4a87-bd13-0a0949aff7a1:1733393611651:0:F:create table CLI (\n    CodeCli number(5) constraint Cle_Cli primary key,\n    NomCli char(20) constraint NomCli_Not_Null not null,\n    Pays char(15) constraint Pays_Not_Nell not null\n);
+ecc079ee-a367-4283-ae0e-8d50b73fe5bb:1733393625774:0:F:create table COM ( \n    NumCom number(5) constraint Cle_Com primary key,  \n    NumCli [number(5)] constraint Com_Ref_Cli references CLI,  \n    FraisPort number(3,2) constraint FraisPort_Not_Null not null \n    AnCom number(4)\n);
+f8f26137-0535-4e31-a003-25371c91f277:1733393753401:0:F:create table COM ( \n    NumCom number(5) constraint Cle_Com primary key,  \n    NumCli [number(5)] constraint Com_Ref_Cli references CLI,  \n    FraisPort number(3,2) constraint FraisPort_Not_Null not null \n    AnCom number(4)\n);
+276189b9-57fa-4b4d-9da9-c7716b0fa855:1733393781147:0:F:create table COM ( \n    NumCom number(5) constraint Cle_Com primary key,  \n    NumCli [number(5)] constraint Com_Ref_Cli references CLI,  \n    FraisPort number(3,2) constraint FraisPort_Not_Null not null \n    AnCom number(4)\n);
+ca8d579c-66a9-4f45-935f-451b5d5a5227:1733394038227:36:S:create table COM ( \n    NumCom number(5) constraint Cle_Com primary key,  \n    NumCli number(5) constraint Com_Ref_Cli references CLI,  \n    FraisPort number(5) constraint FraisPort_Not_Null not null,\n    AnCom number(4)\n);
+b29f8efb-0c25-43ff-bc46-149551450b2e:1733394053575:0:F:create table DET (\n    NumCom number(5) constraint Det_Ref_Com references COM,\n    NumProd number(5) constraint Det_Ref_Prod references PROD,\n    Qte number(5) constraint Qte_Not_Null not null,\n    Remise number(5) constraint Qte_Not_Null not null\n);
+965aa269-e4ba-421e-b61e-afdfed9f75f5:1733394093861:22:S:create table DET (\n    NumCom number(5) constraint Det_Ref_Com references COM,\n    NumProd number(5) constraint Det_Ref_Prod references PROD,\n    Qte number(5) constraint Qte_Not_Null not null,\n    Remise number(5) constraint Remise_Not_Null not null\n);
+a10056ab-274f-4f4e-a9d7-b8ebb0704830:1733394240079:258:S:desc CLI
+f109d75c-dcc4-4ffe-869a-71f0f6bdf791:1733394282965:69:S:desc CLI
+88980f42-3916-4343-9a7c-12957a85c8b1:1733394283256:59:S:desc COM
+774902f5-96d8-4ab2-95a1-7d79a6c1483f:1733394283593:55:S:desc DET
+3fcbb8bd-bf9e-408a-83dd-306e9d3800f0:1733394507161:0:F:drop table PROD\ndrop table DET\ndrop table COM\ndrop table CLI\n-- Question 2\ncreate table CLI (\n    CodeCli number(5) constraint Cle_Cli primary key,\n    NomCli char(20) constraint NomCli_Not_Null not null,\n    Pays char(15) constraint Pays_Not_Nell not null\n);
+d5b25df6-41cd-4b5c-a298-2f4e7e39b37e:1733394508353:0:F:create table COM ( \n    NumCom number(5) constraint Cle_Com primary key,  \n    CodeCli number(5) constraint Com_Ref_Cli references CLI,  \n    FraisPort number(5) constraint FraisPort_Not_Null not null,\n    AnCom number(4)\n);
+6c755ab2-4d16-4977-a14d-82652ac17038:1733394509377:0:F:create table PROD (\n    NumProd number(5) constraint Cle_Prod primary key,\n    NomProd char(20) constraint NomProd_Not_Null not null,\n    TypeProd char(20) constraint TypeProd_Not_Null not null\n);
+d6235181-ddf6-4049-83b7-11fd32701509:1733394510633:0:F:create table DET (\n    NumCom number(5) constraint Det_Ref_Com references COM,\n    NumProd number(5) constraint Det_Ref_Prod references PROD,\n    Qte number(5) constraint Qte_Not_Null not null,\n    Remise number(5) constraint Remise_Not_Null not null\n);
+723695ab-c46f-4264-8d82-c709f48f9146:1733394511045:235:S:desc CLI
+992d4cfe-68f3-4a72-8e4c-8029e8292025:1733394511588:117:S:desc COM
+2e044f70-43f9-449a-afb5-c1f799fb0c74:1733394511898:98:S:desc DET
+12f609c9-a18d-41de-a093-645c7c5096d9:1733394512188:60:S:desc PROD
+68f0175a-898b-497b-99ee-c572b3657c02:1733394583403:48:S:drop table DET;
+eefc1863-5370-418a-8723-c3e9624818ba:1733394583540:49:S:drop table PROD;
+abeeed04-487f-4e1c-b5b7-8997351ea2a3:1733394583670:32:S:drop table COM;
+daaff9b3-d3bf-46c1-ab34-78531624c6f4:1733394583786:33:S:drop table CLI;
+285d332c-7a88-415e-8a90-98b0a7866487:1733394585197:27:S:create table CLI (\n    CodeCli number(5) constraint Cle_Cli primary key,\n    NomCli char(20) constraint NomCli_Not_Null not null,\n    Pays char(15) constraint Pays_Not_Nell not null\n);
+f08ea2d6-9280-4b1d-bf9c-ed4fed18b8f5:1733394586262:52:S:create table COM ( \n    NumCom number(5) constraint Cle_Com primary key,  \n    CodeCli number(5) constraint Com_Ref_Cli references CLI,  \n    FraisPort number(5) constraint FraisPort_Not_Null not null,\n    AnCom number(4)\n);
+f5c480bc-5136-4c91-bc7d-cc042d09ccb5:1733394587324:25:S:create table PROD (\n    NumProd number(5) constraint Cle_Prod primary key,\n    NomProd char(20) constraint NomProd_Not_Null not null,\n    TypeProd char(20) constraint TypeProd_Not_Null not null\n);
+bbb601bc-c267-4ed1-a600-e9443d5be9c9:1733394588527:34:S:create table DET (\n    NumCom number(5) constraint Det_Ref_Com references COM,\n    NumProd number(5) constraint Det_Ref_Prod references PROD,\n    Qte number(5) constraint Qte_Not_Null not null,\n    Remise number(5) constraint Remise_Not_Null not null\n);
+0dcfec8c-9b98-44f5-8310-2f7baacaa3d7:1733394588868:82:S:desc CLI
+8eee12e3-10bb-4347-a93f-a9c54e160ca3:1733394589146:58:S:desc COM
+0c014aae-7ccb-47af-b4fb-fa22f76bcd9d:1733394589406:50:S:desc DET
+02a087fc-fc2f-412c-a90c-7665e4f8a141:1733394589614:56:S:desc PROD
+a4b10fc6-6336-4f69-8ff1-8c49c28415c3:1733394680472:25:S:alter table CLI modify (NomCli char(30));
+87a17831-1361-4523-ac7e-fe9a4c8cb328:1733394759858:36:S:alter table CLI add (Tel number(10) constraint Tel_Not_Null not null);
