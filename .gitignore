@@ -1,4 +1,8 @@
+# .o
+*.o
+
 # Compiled programs
+*.exe
 *.x
 *.out
 .vscode/
