@@ -8,7 +8,21 @@
 *lscpu donne des infos utiles sur le processeur : nb core, taille de cache :*
 
 ```
-Coller ici les infos *utiles* de lscpu.
+Architecture:             x86_64
+  CPU op-mode(s):         32-bit, 64-bit
+  Address sizes:          48 bits physical, 48 bits virtual
+  Byte Order:             Little Endian
+CPU(s):                   16
+  On-line CPU(s) list:    0-15
+Vendor ID:                AuthenticAMD
+  Model name:             AMD Ryzen 7 5800HS with Radeon Graphics
+    CPU family:           25
+    Model:                80
+    Thread(s) per core:   2
+    Core(s) per socket:   8
+    Socket(s):            1
+    Stepping:             0
+    BogoMIPS:             6387.82
 ```
 
 
