@@ -32,13 +32,12 @@ Vendor ID:                AuthenticAMD
 
   n            | MFlops
 ---------------|--------
-1024 (origine) |
-               |
-               |
-               |
-               |
+      800      | 525.424
+      1023     | 358.797
+1024 (origine) | 80.307
+      1025     | 361.581
 
-*Expliquer les résultats.*
+Pour 1024, moins efficace : Histoire de stockage modulo dans le cache : si 1024 -> on tape dans la meme cellule de caache et donc on utilise pas tout le cache mais tout le temps la même.
 
 
 ### Permutation des boucles
@@ -50,15 +49,19 @@ Vendor ID:                AuthenticAMD
 
   ordre           | time    | MFlops  | MFlops(n=2048)
 ------------------|---------|---------|----------------
-i,j,k (origine)   | 2.73764 | 782.476 |
-j,i,k             |         |         |
-i,k,j             |         |         |
-k,i,j             |         |         |
-j,k,i             |         |         |
-k,j,i             |         |         |
+i,j,k (origine)   | 12.0961 | 177.536 |
+j,i,k             | 11.2669 | 190.601 |
+i,k,j             | 27.4123 | 78.3402 |
+k,i,j             | 30.5559 | 70.2805 |
+j,k,i             | 1.64956 | 1301.85 |
+k,j,i             | 0.44676 | 4806.76 |
 
 
 *Discuter les résultats.*
+Quand i en dernier : plus efficace 
+On peut expliquer cela par le fait que i représente la ligne de la matrice C et A, or, les matrices sont représentées comme des vecteurs, qui sont stockés en ligne de manière contigue. 
+De fait, Lorsque l'on fait i le plus imbriqué, on est sûr que lorsque l'on va charger les données de A, ce sont bien des données d'une même ligne, ce qui évitera les caches miss.
+Pour j en deuxième imbriqué, c'est la même chose mais avec le chargement des données de B
 
 
 
@@ -66,10 +69,12 @@ k,j,i             |         |         |
 
 `make TestProduct.exe && OMP_NUM_THREADS=8 ./TestProduct.exe 1024`
 
+On rajoute un pragma devant la première boucle pour signifier qu'on veut paralléliser le traitement de la boucle for.
+
   OMP_NUM         | MFlops  | MFlops(n=2048) | MFlops(n=512)  | MFlops(n=4096)
 ------------------|---------|----------------|----------------|---------------
-1                 |
-2                 |
+1                 | 4880.71 |    2462.57     |    4727.38     |    2210.98
+2                 | 
 3                 |
 4                 |
 5                 |
