@@ -6,6 +6,7 @@
 # include <fstream>
 # include <iostream>
 # include <iomanip>
+#include <omp.h>
 # include <mpi.h>
 
 // Attention , ne marche qu'en C++ 11 ou supérieur :
@@ -19,6 +20,7 @@ double approximate_pi( unsigned long nbSamples )
     std::uniform_real_distribution <double> distribution ( -1.0 ,1.0);
     unsigned long nbDarts = 0;
     // Throw nbSamples darts in the unit square [-1 :1] x [-1 :1]
+	// #pragma omp parallel for ///////////////////////////////////////// OpenMP
     for ( unsigned sample = 0 ; sample < nbSamples ; ++ sample ) {
         double x = distribution(generator);
         double y = distribution(generator);
@@ -59,7 +61,10 @@ int main( int nargs, char* argv[] )
 	fileName << "Output" << std::setfill('0') << std::setw(5) << rank << ".txt";
 	std::ofstream output( fileName.str().c_str() );
 
-	// Rajout de code....
+	
+	double approx_pi = approximate_pi(100000);
+	std::cout << approx_pi << std::endl;
+
 
 	output.close();
 	// A la fin du programme, on doit synchroniser une dernière fois tous les processus
