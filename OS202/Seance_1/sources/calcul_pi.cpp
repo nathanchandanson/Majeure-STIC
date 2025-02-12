@@ -1,11 +1,12 @@
 # include <chrono>
 # include <random>
 # include <cstdlib>
-# include <sstream>
-# include <string>
-# include <fstream>
+// # include <sstream>
+// # include <string>
+// # include <fstream>
 # include <iostream>
-# include <iomanip>
+// # include <iomanip>
+#include <vector>
 #include <omp.h>
 # include <mpi.h>
 
@@ -32,41 +33,61 @@ double approximate_pi( unsigned long nbSamples )
     return 4*ratio;
 }
 
-int main( int nargs, char* argv[] )
+int main( int argc, char* argv[] )
 {
-	// On initialise le contexte MPI qui va s'occuper :
-	//    1. Créer un communicateur global, COMM_WORLD qui permet de gérer
-	//       et assurer la cohésion de l'ensemble des processus créés par MPI;
-	//    2. d'attribuer à chaque processus un identifiant ( entier ) unique pour
-	//       le communicateur COMM_WORLD
-	//    3. etc...
-	MPI_Init( &nargs, &argv );
-	// Pour des raisons de portabilité qui débordent largement du cadre
-	// de ce cours, on préfère toujours cloner le communicateur global
-	// MPI_COMM_WORLD qui gère l'ensemble des processus lancés par MPI.
-	MPI_Comm globComm;
-	MPI_Comm_dup(MPI_COMM_WORLD, &globComm);
-	// On interroge le communicateur global pour connaître le nombre de processus
-	// qui ont été lancés par l'utilisateur :
-	int nbp;
-	MPI_Comm_size(globComm, &nbp);
-	// On interroge le communicateur global pour connaître l'identifiant qui
-	// m'a été attribué ( en tant que processus ). Cet identifiant est compris
-	// entre 0 et nbp-1 ( nbp étant le nombre de processus qui ont été lancés par
-	// l'utilisateur )
-	int rank;
-	MPI_Comm_rank(globComm, &rank);
-	// Création d'un fichier pour ma propre sortie en écriture :
-	std::stringstream fileName;
-	fileName << "Output" << std::setfill('0') << std::setw(5) << rank << ".txt";
-	std::ofstream output( fileName.str().c_str() );
+	/**** Mise en place de MPI ****/
+	MPI_Comm commGlob;
+    int nbp, rank;
+    MPI_Init(&argc, &argv);
+    MPI_Comm_dup(MPI_COMM_WORLD, &commGlob);    // Copy the global communicator into my own communicator
+    MPI_Comm_size(commGlob, &nbp);              // Retrieve the number of processes launched
+    MPI_Comm_rank(commGlob, &rank);             // Retrieve my own rank
 
+	/**** Execution des différents processus ****/
+	/* Processus 0 */
+	/* Il va se charger de faire la comm avec les autres
+	 * Pour cela, il va :
+	 * - Décider du nombre de points à utiliser puis déterminer le nombre de points par processus
+	 * - Envoyer le nombre de point par processus à chaque processus
+	 * - Calculer l'approximation avec son nombre de points
+	 * - Récupérer toutes les approximations
+	 * - Calculer la valeur finale	
+	*/
+	if(rank == 0)
+	{
+		// Décider du nombre de points à utiliser puis déterminer le nombre de points par processus
+		int N = 1000000;
+		int N_perProcess = N / nbp;
+		// Envoyer le nombre de point par processus à chaque processus
+		MPI_Bcast (&N_perProcess, 1, MPI_INT, 0, commGlob);
+	 	// Calculer l'approximation avec son nombre de points
+		std::vector<float> results;
+	 	// Récupérer toutes les approximations
+		float temp;
+		MPI_Status status;
+		while(results.size() < nbp){
+			MPI_Recv(&temp, 1, MPI_FLOAT, MPI_ANY_SOURCE, MPI_ANY_TAG, commGlob, &status);
+		}
+	 	// Calculer la valeur finale : moyenne de toutes les valeurs trouvées (car autant de points dans chaque processus)
+		float res = std::accumulate(results.begin(), results.end(), 0);
+		res = res/nbp;
+	}
+	/* Processus >0 */
+	/* Il va simplement servir à calcule
+	 * Pour cela, il va:
+     * - Recevoir le nombre de points qu'il doit calculer
+	 * - Calculer son approximation
+	 * - Renvoyer son approximation au processus 0 
+	*/
+	else
+	{
+
+	}
 	
 	double approx_pi = approximate_pi(100000);
 	std::cout << approx_pi << std::endl;
 
 
-	output.close();
 	// A la fin du programme, on doit synchroniser une dernière fois tous les processus
 	// afin qu'aucun processus ne se termine pendant que d'autres processus continue à
 	// tourner. Si on oublie cet instruction, on aura une plantage assuré des processus
