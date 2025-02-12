@@ -51,17 +51,24 @@ class MandelbrotSet:
 mandelbrot_set = MandelbrotSet(max_iterations=50, escape_radius=10)
 width, height = 1024, 1024
 
-scaleX = 3./width
-scaleY = 2.25/height
-convergence = np.empty((width, height), dtype=np.double)
-# Calcul de l'ensemble de mandelbrot :
-deb = time()
-for y in range(height):
-    for x in range(width):
-        c = complex(-2. + scaleX*x, -1.125 + scaleY * y)
-        convergence[x, y] = mandelbrot_set.convergence(c, smooth=True)
-fin = time()
-print(f"Temps du calcul de l'ensemble de Mandelbrot : {fin-deb}")
+# scaleX = 3./width
+# scaleY = 2.25/height
+# convergence = np.empty((width, height), dtype=np.double)
+# # Calcul de l'ensemble de mandelbrot :
+# deb = time()
+# for y in range(height):
+#     for x in range(width):
+#         c = complex(-2. + scaleX*x, -1.125 + scaleY * y)
+#         convergence[x, y] = mandelbrot_set.convergence(c, smooth=True)
+# fin = time()
+# print(f"Temps du calcul de l'ensemble de Mandelbrot : {fin-deb}")
+
+########## Principe ##########
+# Processus 0 : Gère la comm et calcule aussi
+# Processus >0 : calcule
+
+########## Processus 0 ##########
+# 
 
 # Constitution de l'image résultante :
 deb = time()
