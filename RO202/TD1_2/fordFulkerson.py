@@ -41,7 +41,6 @@ def fordFulkerson(g, sName, tName):
      - mark[i] est égal à  -j si le sommet d'indice i peut être atteint en diminuant le flot de l'arc ji
      - mark[i] est égal à sys.float_info.max si le sommet n'est pas marqué
     """
-    mark = [0] * g.n
     
     # Récupérer l'indice de la source et du puits
     s = g.indexOf(sName)
@@ -52,9 +51,31 @@ def fordFulkerson(g, sName, tName):
 
     # Récupérer tous les arcs du graphe 
     arcs = g.getArcs()
+    for arc in arcs:
+        print(arc.id1, ", ", arc.id2)
 
-    # Ajouter votre code ici
-    # ...
+    # Faire ... tant que t marqué
+    while(True):
+        # Retirer toutes les marques
+        mark = [sys.float_info.max] * g.n
+
+        # Boucle de marquage
+        iter = 0
+        while(True):
+            nv_marquage = False
+            # On regarde les sommets 
+            current_arc = arcs[iter]
+            
+
+            if(mark[t] != sys.float_info.max or nv_marquage == False):  # Si t marqué ou si pas de nouveau marquage on sort
+                break
+            else: 
+                iter = iter + 1
+
+        if(mark[t] == sys.float_info.max):  # On sort si t est pas marqué
+           break
+        # else:   # t est marqué : On améliore
+            # Test bidul
     
     return flow
    
