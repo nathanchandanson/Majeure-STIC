@@ -59,18 +59,27 @@ int main( int argc, char* argv[] )
 		int N = 1000000;
 		int N_perProcess = N / nbp;
 		// Envoyer le nombre de point par processus à chaque processus
-		MPI_Bcast (&N_perProcess, 1, MPI_INT, 0, commGlob);
+		for(int i = 1; i<nbp; i++){
+			MPI_Send(&N_perProcess, 1, MPI_INT, i, 0, commGlob);
+		}
 	 	// Calculer l'approximation avec son nombre de points
-		std::vector<float> results;
+		std::vector<double> results;
+		results.push_back(approximate_pi(N_perProcess));
 	 	// Récupérer toutes les approximations
-		float temp;
+		double temp;
 		MPI_Status status;
 		while(results.size() < nbp){
-			MPI_Recv(&temp, 1, MPI_FLOAT, MPI_ANY_SOURCE, MPI_ANY_TAG, commGlob, &status);
+			MPI_Recv(&temp, 1, MPI_DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, commGlob, &status);
+			results.push_back(temp);
 		}
 	 	// Calculer la valeur finale : moyenne de toutes les valeurs trouvées (car autant de points dans chaque processus)
-		float res = std::accumulate(results.begin(), results.end(), 0);
-		res = res/nbp;
+		double res = 0;
+		for(double temp : results){res+=temp;}
+		std::cout << res << std::endl;
+		res = res/(double)nbp;
+
+		// Affichage du résultat
+		std::cout << "Approximation de Pi avec " << N << " points, séparés sur " << nbp << " process : " << res << std::endl;
 	}
 	/* Processus >0 */
 	/* Il va simplement servir à calcule
@@ -81,11 +90,23 @@ int main( int argc, char* argv[] )
 	*/
 	else
 	{
+		// Récupération du nombre de points
+		int n_points;
+		MPI_Status status;
+		MPI_Recv(&n_points, 1, MPI_INT, 0, MPI_ANY_TAG, commGlob, &status);
 
+		// Calculer l'approximation 
+		double approx_pi = approximate_pi(100000);
+
+		// // Afficher qu'on a fini 
+		// std::cout << "Process : " << rank << " a fini" << std::endl;
+
+		// Renvoyer l'approximation 
+		MPI_Send(&approx_pi, 1, MPI_DOUBLE, 0, 0, commGlob);
 	}
 	
-	double approx_pi = approximate_pi(100000);
-	std::cout << approx_pi << std::endl;
+	
+	
 
 
 	// A la fin du programme, on doit synchroniser une dernière fois tous les processus
