@@ -1,0 +1,14 @@
+Study the impact of the number of UF on pagerank with out-of-order execution
+SIZE;N_UF;nb_cycles;CPI
+min;1;142420;1.4592
+min;2;116770;1.1964
+min;4;111861;1.1461
+min;8;111861;1.1461
+med;1;256531;1.3015
+med;2;201909;1.0244
+med;4;192235;0.9753
+med;8;192235;0.9753
+max;1;1603764;1.1959
+max;2;1239786;0.9245
+max;4;1172626;0.8744
+max;8;1172626;0.8744

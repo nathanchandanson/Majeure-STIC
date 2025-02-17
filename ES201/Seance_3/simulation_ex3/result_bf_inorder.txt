@@ -1,0 +1,14 @@
+Study the impact of the number of UF on blowfish with in-order execution
+SIZE;N_UF;nb_cycles;CPI
+small;1;3242780;1.2904
+small;2;2876104;1.1445
+small;4;2727980;1.0856
+small;8;2727980;1.0856
+medium;1;6203448;1.2882
+medium;2;5490825;1.1403
+medium;4;5203847;1.0807
+medium;8;5203847;1.0807
+large;1;12113078;1.2859
+large;2;10708587;1.1368
+large;4;10143898;1.0769
+large;8;10143898;1.0769
