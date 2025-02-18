@@ -14,8 +14,8 @@ max_value = int(1E6)    # Données aléatoires comprises entre [-max_value, max_
 ####### Processus 0 #######
 # Il doit :
 # - Créer son propre tableau
-# - Calculer son propre tableau [min,max,mediane]
-# - Attendre les tableaux [min,max,mediane] des autres tableaux (gather)
+# - Calculer son propre tableau [min,max,quantiles]
+# - Attendre les tableaux [min,max,quantiles] des autres tableaux (gather)
 # - Créer la répartition des tableaux
 # - Envoyer cette répartition à tt le monde (all broadcast)
 # - Envoyer toutes les données aux autres process correspondant à leur bucket
@@ -25,7 +25,7 @@ max_value = int(1E6)    # Données aléatoires comprises entre [-max_value, max_
 ####### Processus >0 #######
 # Il doit :
 # - Créer son propre tableau
-# - Trouver le tableau [min,max,mediane] de ses données
+# - Trouver le tableau [min,max,quantiles] de ses données
 # - L'envoyer à P0
 # - Attendre la répartition des données envoyée par P0
 # - Envoyer toutes les données aux autres process correspondant à leur bucket
@@ -51,24 +51,31 @@ globCom.Gather(minMaxTable, concatenated_minMaxTable)
 if(rank == 0):   
     # Créer la répartition des tableaux
     quantiles = np.quantile(concatenated_minMaxTable, [i/nbp for i in range(1,nbp)]).tolist()
-    data_to_send = [min(concatenated_minMaxTable)] + quantiles + [max(concatenated_minMaxTable)]
-    data_to_send = np.array(data_to_send * nbp)
+    glob_minMaxTable = np.array([min(concatenated_minMaxTable)] + quantiles + [max(concatenated_minMaxTable)])
 else:
-    data_to_send = None
-
-# Réception des tables avec min/quantiles/max
-glob_minMaxTable = np.empty(nbp+1)
+    glob_minMaxTable = np.empty(nbp+1, dtype='float')
 
 # Envoyer cette répartition à tt le monde
-globCom.Scatter(data_to_send, glob_minMaxTable, root=0)
+globCom.Bcast(glob_minMaxTable, root=0)
 
 ####### Envoie des données aux autres bucket + Réception pour notre bucket #######
+# Données propres
+values_to_sort = np.array([])
+# Buffer d'envoi
+buffer_size = (MPI.BSEND_OVERHEAD + np.dtype('float').itemsize) * N     # On fait un buffer de taille N, pour être sûr qu'on peut envoyer toutes les données
+buffer = np.empty(buffer_size, )
+
 for val in values:
-    # On vérifie si la valeur est pas déjà dans le bon bucket
-    if(not (val >= glob_minMaxTable[rank] and val < glob_minMaxTable[rank+1])):
-        for i in range(len(glob_minMaxTable)-1):
-            if(val >= glob_minMaxTable[i] and val < glob_minMaxTable[i+1]):
-                # Envoyer au process correspondant
+    for i in range(len(glob_minMaxTable)-1):
+        if(val >= glob_minMaxTable[i] and val < glob_minMaxTable[i+1]):
+            if(i == rank):
+                # Cette valeur est dans le bucket propre 
+                values_to_sort = np.append(values_to_sort, val)
+            else:
+                # Cette valeur doit être dans un autre bucket : on l'envoie
+                globCom.Ibsend(np.array([val], dtype='float'), dest=i, tag=0)
+
+                
 
 
 
