@@ -1,42 +1,8 @@
-"""
-Le jeu de la vie
-################
-Le jeu de la vie est un automate cellulaire inventé par Conway se basant normalement sur une grille infinie
-de cellules en deux dimensions. Ces cellules peuvent prendre deux états :
-    - un état vivant
-    - un état mort
-A l'initialisation, certaines cellules sont vivantes, d'autres mortes.
-Le principe du jeu est alors d'itérer de telle sorte qu'à chaque itération, une cellule va devoir interagir avec
-les huit cellules voisines (gauche, droite, bas, haut et les quatre en diagonales.) L'interaction se fait selon les
-règles suivantes pour calculer l'irération suivante :
-    - Une cellule vivante avec moins de deux cellules voisines vivantes meurt ( sous-population )
-    - Une cellule vivante avec deux ou trois cellules voisines vivantes reste vivante
-    - Une cellule vivante avec plus de trois cellules voisines vivantes meurt ( sur-population )
-    - Une cellule morte avec exactement trois cellules voisines vivantes devient vivante ( reproduction )
-
-Pour ce projet, on change légèrement les règles en transformant la grille infinie en un tore contenant un
-nombre fini de cellules. Les cellules les plus à gauche ont pour voisines les cellules les plus à droite
-et inversement, et de même les cellules les plus en haut ont pour voisines les cellules les plus en bas
-et inversement.
-
-On itère ensuite pour étudier la façon dont évolue la population des cellules sur la grille.
-"""
 import pygame  as pg
 import numpy   as np
-
+from mpi4py import MPI
 
 class Grille:
-    """
-    Grille torique décrivant l'automate cellulaire.
-    En entrée lors de la création de la grille :
-        - dimensions est un tuple contenant le nombre de cellules dans les deux directions (nombre lignes, nombre colonnes)
-        - init_pattern est une liste de cellules initialement vivantes sur cette grille (les autres sont considérées comme mortes)
-        - color_life est la couleur dans laquelle on affiche une cellule vivante
-        - color_dead est la couleur dans laquelle on affiche une cellule morte
-    Si aucun pattern n'est donné, on tire au hasard quels sont les cellules vivantes et les cellules mortes
-    Exemple :
-       grid = Grille( (10,10), init_pattern=[(2,2),(0,2),(4,2),(2,0),(2,4)], color_life=pg.Color("red"), color_dead=pg.Color("black"))
-    """
     def __init__(self, dim, init_pattern=None, color_life=pg.Color("black"), color_dead=pg.Color("white")):
         import random
         self.dimensions = dim
@@ -62,11 +28,6 @@ class Grille:
 
 
 class App:
-    """
-    Cette classe décrit la fenêtre affichant la grille à l'écran
-        - geometry est un tuple de deux entiers donnant le nombre de pixels verticaux et horizontaux (dans cet ordre)
-        - grid est la grille décrivant l'automate cellulaire (voir plus haut)
-    """
     def __init__(self, geometry, grid):
         self.grid = grid
         # Calcul de la taille d'une cellule par rapport à la taille de la fenêtre et de la grille à afficher :
@@ -132,20 +93,53 @@ if __name__ == '__main__':
     except KeyError:
         print("No such pattern. Available ones are:", dico_patterns.keys())
         exit(1)
-    grid = Grille(*init_pattern)
-    appli = App((resx, resy), grid)
 
-    loop = True
-    while loop:
-        #time.sleep(0.1) # A régler ou commenter pour vitesse maxi
-        t1 = time.time()
-        diff = grid.compute_next_iteration()
-        t2 = time.time()
-        appli.draw()
-        t3 = time.time()
-        for event in pg.event.get():
-            if event.type == pg.QUIT:
-                loop = False
-        print(f"Temps calcul prochaine generation : {t2-t1:2.2e} secondes, temps affichage : {t3-t2:2.2e} secondes\r", end='')
+    ########## MPI ##########
+    globCom = MPI.COMM_WORLD.Dup()
+    nbp     = globCom.size
+    rank    = globCom.rank
+    name    = MPI.Get_processor_name()
 
-pg.quit()
+    ########## Process 0 ##########
+    if rank==0:
+        grid = Grille(*init_pattern)
+        appli = App((resx, resy), grid)
+
+        loop = True
+        while loop:
+            # Affichage
+            t2 = time.time()
+            appli.draw()
+            t3 = time.time()
+            print(f"Temps affichage : {t3-t2:2.2e} secondes")
+            # On a finit l'affichage : on le dit à l'autre process
+            globCom.Send(np.array([1]), dest=1, tag=0)
+            globCom.Recv(appli.grid.cells, source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG)
+            # On vérifie si on veut quitter
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    loop = False
+                    pg.quit()
+                    globCom.Abort()
+            
+        
+    ########## Process >0 ##########
+    else:
+        grid = Grille(*init_pattern)
+        loop = True
+        status = MPI.Status()
+        while loop:
+            while not globCom.Iprobe(source=0, tag=MPI.ANY_TAG, status=status):
+                # Faire le calcul
+                t1 = time.time()
+                grid.compute_next_iteration()
+                t2 = time.time()
+                print(f"Temps de calcul : {t2-t1:2.2e} secondes")
+
+            # Si on sort de la boucle : un message en attente
+            temp=np.empty(1)
+            globCom.Recv(temp, source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG)
+            globCom.Send(grid.cells, dest=0, tag=0)
+
+            
+            
