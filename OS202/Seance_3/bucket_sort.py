@@ -36,11 +36,12 @@ max_value = int(1E6)    # Données aléatoires comprises entre [-max_value, max_
 # Création de son tableau propre
 values = np.random.randint(-max_value, max_value, size=N)
 # Calculer son propre tableau [min,max,mediane]
-minMaxTable = np.array([min(values), max(values), np.median(values)]) ######################## Modifier pour donner tous les quantiles
+quantiles = np.quantile(values, [i/nbp for i in range(1,nbp)]).tolist()
+minMaxTable = np.array([min(values), max(values)] + quantiles) ######################## Modifier pour donner tous les quantiles
 
 ####### Création du buffer #######
 if(rank == 0):
-    concatenated_minMaxTable = np.empty(nbp*3, dtype='float')
+    concatenated_minMaxTable = np.empty(nbp*(nbp+1), dtype='float')
 else:
     concatenated_minMaxTable = None
 
@@ -50,8 +51,8 @@ globCom.Gather(minMaxTable, concatenated_minMaxTable)
 ####### Calcul des quantiles et min/max #######
 if(rank == 0):   
     # Créer la répartition des tableaux
-    quantiles = np.quantile(concatenated_minMaxTable, [i/nbp for i in range(1,nbp)]).tolist()
-    glob_minMaxTable = np.array([min(concatenated_minMaxTable)] + quantiles + [max(concatenated_minMaxTable)])
+    glob_quantiles = np.quantile(concatenated_minMaxTable, [i/nbp for i in range(1,nbp)]).tolist()
+    glob_minMaxTable = np.array([min(concatenated_minMaxTable)] + glob_quantiles + [max(concatenated_minMaxTable)])
 else:
     glob_minMaxTable = np.empty(nbp+1, dtype='float')
 
@@ -63,8 +64,9 @@ globCom.Bcast(glob_minMaxTable, root=0)
 values_to_sort = np.array([])
 # Buffer d'envoi
 buffer_size = (MPI.BSEND_OVERHEAD + np.dtype('float').itemsize) * N     # On fait un buffer de taille N, pour être sûr qu'on peut envoyer toutes les données
-buffer = np.empty(buffer_size, )
+buffer = np.empty(buffer_size, dtype='float')
 
+# Envoi des données
 for val in values:
     for i in range(len(glob_minMaxTable)-1):
         if(val >= glob_minMaxTable[i] and val < glob_minMaxTable[i+1]):
@@ -75,8 +77,15 @@ for val in values:
                 # Cette valeur doit être dans un autre bucket : on l'envoie
                 globCom.Ibsend(np.array([val], dtype='float'), dest=i, tag=0)
 
+# Réception des données
+status = MPI.Status()
+while globCom.Iprobe(source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG, status=status):
+    temp = np.empty(1, dtype='float')
+    globCom.Recv(temp, source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG)
+    values_to_sort = np.append(values_to_sort, temp)
                 
 
 
-
 ####### Tri de notre bucket #######
+values_sorted = np.sort(values_to_sort)
+print("Processus n°", rank, " : Valeurs Min/Max : ",values_sorted[0],",",values_sorted[-1])
