@@ -6,3 +6,6 @@
 *.x
 *.out
 .vscode/
+
+# simplescalar
+ES201/simpelsim-3.0

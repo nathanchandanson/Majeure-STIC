@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SIM_PROFILE=/usr/ensta/pack/simplescalar-3v0d/simplesim-3.0/sim-profile
+SIM_PROFILE=../../simplesim-3.0/sim-profile
 
 PRG_SS1="conv2D.ss"
 PRG_SS2="conv2D_int.ss"
