@@ -23,6 +23,20 @@ img2 = cv2.imread('../Image_Pairs/torb_small2.png')
 print("Dimension de l'image 2 :",img2.shape[0],"lignes x",img2.shape[1],"colonnes")
 print("Type de l'image 2 :",img2.dtype)
 
+# Modification de l'image
+# Translation 
+translation_matrix = np.float32([[1, 0, 50], [0, 1, 30]])
+# Rotation
+center = (img2.shape[0] // 2, img2.shape[1] // 2)
+rotation_matrix = cv2.getRotationMatrix2D(center, 45, 1.0)
+# Scaling
+scaling_matrix = np.float32([[0.8, 0, 0], [0, 0.8, 0]])
+# Shear
+shear_matrix = np.float32([[1, 0.5, 0], [0, 1, 0]])
+# Application de la transformation
+img2 = cv2.warpAffine(img2, translation_matrix, (img2.shape[0], img2.shape[1]))
+
+
 #Début du calcul
 t1 = cv2.getTickCount()
 #Création des objets "keypoints"
